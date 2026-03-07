@@ -33,11 +33,11 @@ func StartFalcoHTTP(socketPath string, eventQueue chan<- models.SecEvent) {
 		rawBytes, _ := json.Marshal(payload)
 
 		alert := models.SecEvent{
-			SourceTool:  "Falco",
+			SourceTool:  models.FALCO,
 			Timestamp:   parsedTime,
-			Severity:    payload.Priority,
+			Priority:    payload.Priority,
 			Description: payload.Output,
-			RawPayload:  string(rawBytes),
+			RawPayload:  json.RawMessage(rawBytes),
 		}
 
 		eventQueue <- alert

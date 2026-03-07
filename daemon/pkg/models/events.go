@@ -1,11 +1,23 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
+
+type SecTool = string
+
+const (
+	FALCO    SecTool = "falco"
+	SURICATA SecTool = "suricata"
+	WAZUH    SecTool = "wazuh"
+	ZEEK     SecTool = "zeek"
+)
 
 type SecEvent struct {
-	SourceTool  string    `json:"source_tool"`
-	Timestamp   time.Time `json:"time_stamp"`
-	Severity    string    `json:"severity"`
-	Description string    `json:"description"`
-	RawPayload  string    `json:"raw_payload"`
+	SourceTool  SecTool         `json:"sourceTool"`
+	Timestamp   time.Time       `json:"timestamp"`
+	Priority    string          `json:"severity"`
+	Description string          `json:"description"`
+	RawPayload  json.RawMessage `json:"rawPayload"`
 }
