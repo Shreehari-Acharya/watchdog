@@ -81,7 +81,6 @@ func RunInstallerUI() {
 		&installers.FalcoTool{},
 		&installers.SuricataTool{},
 		&installers.WazuhTool{},
-		&installers.ZeekTool{},
 	}
 
 	p := tea.NewProgram(ui.InitialModel(tools))
