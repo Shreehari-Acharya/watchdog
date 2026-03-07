@@ -31,7 +31,7 @@ export default function EventDetailPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/events/${id}`);
+        const res = await fetch(`/api/events/${id}`);
         if (!res.ok) throw new Error(`Event not found (${res.status})`);
         const data: EventDetail = await res.json();
         setEvent(data);
@@ -75,7 +75,7 @@ export default function EventDetailPage() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 dark:bg-black">
         <p className="text-sm text-red-500">{error ?? "Event not found"}</p>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.back()}
           className="text-sm text-blue-600 underline hover:text-blue-500 dark:text-blue-400"
         >
           Back to events
@@ -89,7 +89,7 @@ export default function EventDetailPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         {/* Back button */}
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.back()}
           className="mb-6 flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:hover:text-zinc-200"
         >
           <span>←</span> Back to events
