@@ -7,6 +7,7 @@ import {
   readWithToolApi,
   writeWithToolApi,
 } from "../services/daemonToolsClient.js";
+import { logDebug, logInfo } from "../utils/logger.js";
 
 const normalizePath = (value: string): string => path.posix.resolve(value.replaceAll("\\", "/"));
 
@@ -97,6 +98,7 @@ Strict rules:
 };
 
 export async function runProjectSummariserAgent(projectRoot: string): Promise<string> {
+  logInfo("agent.project-summariser", "start", { projectRoot });
   const session = new MemorySession();
   const agent = createProjectSummariserAgent(projectRoot);
 
@@ -116,5 +118,9 @@ Build a summary optimized for high-signal, low-noise detection rule writing.`;
     throw new Error(`Failed to write summary to daemon path: ${PROJECT_SUMMARY_REMOTE_PATH}`);
   }
 
+  logDebug("agent.project-summariser", "summary written", {
+    path: PROJECT_SUMMARY_REMOTE_PATH,
+  });
+  logInfo("agent.project-summariser", "completed", { projectRoot });
   return finalSummary;
 }
