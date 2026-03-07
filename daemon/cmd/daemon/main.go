@@ -74,7 +74,7 @@ func RunInstallerUI() {
 
 	tools := []installers.SecurityTools{
 		&installers.FalcoTool{},
-		// &installers.Suricata...... ese add karlena
+		&installers.SuricataTool{},
 	}
 
 	p := tea.NewProgram(ui.InitialModel(tools))
