@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -20,19 +21,19 @@ import (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const (
-	colorPrimary    = lipgloss.Color("#5EAEFF") // soft blue — accents
-	colorSecondary  = lipgloss.Color("#3A7BD5") // mid-blue — borders, highlights
-	colorTertiary   = lipgloss.Color("#1B3A5C") // dark navy — backgrounds
-	colorAccent     = lipgloss.Color("#89CFF0") // light sky blue — active items
-	colorDim        = lipgloss.Color("#4A5568") // muted grey — inactive text
-	colorDimmer     = lipgloss.Color("#2D3748") // darker grey — decorative lines
-	colorText       = lipgloss.Color("#CBD5E1") // off-white — body text
-	colorSuccess    = lipgloss.Color("#5EEAD4") // teal-green — success
-	colorError      = lipgloss.Color("#F87171") // soft red — errors
-	colorWarn       = lipgloss.Color("#FBBF24") // amber — warnings / phase labels
-	colorWhiteBold  = lipgloss.Color("#F1F5F9") // near-white for titles
-	colorLogPhase   = lipgloss.Color("#818CF8") // indigo — phase badges
-	colorLogToolBg  = lipgloss.Color("#1E293B") // dark slate — tool-name bg
+	colorPrimary   = lipgloss.Color("#5EAEFF") // soft blue — accents
+	colorSecondary = lipgloss.Color("#3A7BD5") // mid-blue — borders, highlights
+	colorTertiary  = lipgloss.Color("#1B3A5C") // dark navy — backgrounds
+	colorAccent    = lipgloss.Color("#89CFF0") // light sky blue — active items
+	colorDim       = lipgloss.Color("#4A5568") // muted grey — inactive text
+	colorDimmer    = lipgloss.Color("#2D3748") // darker grey — decorative lines
+	colorText      = lipgloss.Color("#CBD5E1") // off-white — body text
+	colorSuccess   = lipgloss.Color("#5EEAD4") // teal-green — success
+	colorError     = lipgloss.Color("#F87171") // soft red — errors
+	colorWarn      = lipgloss.Color("#FBBF24") // amber — warnings / phase labels
+	colorWhiteBold = lipgloss.Color("#F1F5F9") // near-white for titles
+	colorLogPhase  = lipgloss.Color("#818CF8") // indigo — phase badges
+	colorLogToolBg = lipgloss.Color("#1E293B") // dark slate — tool-name bg
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +122,9 @@ var (
 			Foreground(colorPrimary).
 			Bold(true)
 
+	logCommandStyle = lipgloss.NewStyle().
+			Foreground(colorDim)
+
 	// ── Progress ────────────────────────────────────────────────────
 	progressLabelStyle = lipgloss.NewStyle().
 				Foreground(colorText)
@@ -163,9 +167,13 @@ var (
 
 func banner() string {
 	art := `
- █ █ █▀█ ▀█▀ █▀▀ █ █ █▀▄ █▀█ █▀▀
- █▄█ █▀█  █  █   █▀█ █ █ █ █ █ █
- ▀ ▀ ▀ ▀  ▀  ▀▀▀ ▀ ▀ ▀▀  ▀▀▀ ▀▀▀`
+ ██╗    ██╗ █████╗ ████████╗ ██████╗██╗  ██╗██████╗  ██████╗  ██████╗ 
+██║    ██║██╔══██╗╚══██╔══╝██╔════╝██║  ██║██╔══██╗██╔═══██╗██╔════╝ 
+██║ █╗ ██║███████║   ██║   ██║     ███████║██║  ██║██║   ██║██║  ███╗
+██║███╗██║██╔══██║   ██║   ██║     ██╔══██║██║  ██║██║   ██║██║   ██║
+╚███╔███╔╝██║  ██║   ██║   ╚██████╗██║  ██║██████╔╝╚██████╔╝╚██████╔╝
+ ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝ 
+                                                                     `
 	return logoStyle.Render(art)
 }
 
@@ -347,6 +355,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// ── Installation progress ────────────────────────────────────────
 	case installDoneMsg:
 		m.logs = msg.logs
+		m.completedSteps = m.totalSteps
 		if msg.err != nil {
 			m.hadError = true
 			m.logs = append(m.logs, fmtLogError(msg.err.Error()))
@@ -406,7 +415,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.totalSteps = len(selectedTools) * 3
 				m.completedSteps = 0
 
-				m.logs = []string{fmtLogInfo("Initializing deployment pipeline...")}
+				m.logs = []string{
+					fmtLogInfo("Initializing deployment pipeline..."),
+					fmtLogInfo("Running installer commands. Command output will be captured in the final report."),
+				}
 				m.viewport.SetContent(strings.Join(m.logs, "\n"))
 
 				cmds = append(cmds, startInstallCmd(selectedTools))
@@ -511,24 +523,18 @@ func (m model) viewInstalling() string {
 	b.WriteString(titleBarStyle.Render("  DEPLOY  "))
 	b.WriteString("\n\n")
 
-	// Spinner + status line
-	pct := 0.0
-	if m.totalSteps > 0 {
-		pct = float64(m.completedSteps) / float64(m.totalSteps)
-	}
-	pctInt := int(pct * 100)
-
-	b.WriteString(fmt.Sprintf("  %s  %s  %s\n\n",
+	b.WriteString(fmt.Sprintf("  %s  %s\n\n",
 		m.spinner.View(),
 		progressLabelStyle.Render("Deploying modules..."),
-		lipgloss.NewStyle().Foreground(colorPrimary).Bold(true).Render(fmt.Sprintf("%d%%", pctInt)),
 	))
 
-	// Progress bar
-	b.WriteString("  " + m.progress.ViewAs(pct) + "\n\n")
+	logBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(colorDimmer).
+		Padding(0, 1).
+		Render(strings.Join(lastLines(m.logs, 6), "\n"))
 
-	// Log viewport
-	b.WriteString(m.viewport.View())
+	b.WriteString(logBox)
 	b.WriteString("\n")
 
 	return outerBoxStyle.Render(b.String())
@@ -599,6 +605,10 @@ func fmtLogInfo(msg string) string {
 	return fmt.Sprintf("%s  %s  %s", timestamp(), icon, logMsgStyle.Render(msg))
 }
 
+func fmtLogCommand(msg string) string {
+	return fmt.Sprintf("%s      %s", timestamp(), logCommandStyle.Render(msg))
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Install command (runs in background, collects formatted logs)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -606,45 +616,102 @@ func fmtLogInfo(msg string) string {
 func startInstallCmd(tools []installers.SecurityTools) tea.Cmd {
 	return func() tea.Msg {
 		var logs []string
+		var output bytes.Buffer
+
+		installers.SetCommandOutput(&output)
+		defer installers.SetCommandOutput(nil)
 
 		for _, tool := range tools {
 			name := tool.Name()
 
 			// Phase 1: Install
 			logs = append(logs, fmtLogPhase(name, "install", "downloading packages..."))
+			output.Reset()
 			if err := tool.Install(); err != nil {
+				logs = appendCommandOutput(logs, output.String())
 				return installDoneMsg{
 					err:  fmt.Errorf("[%s] install failed: %v", name, err),
 					logs: logs,
 				}
 			}
+			logs = appendCommandOutput(logs, output.String())
 			logs = append(logs, fmtLogPhase(name, "install", "packages installed"))
 
 			// Phase 2: Configure
 			logs = append(logs, fmtLogPhase(name, "config", "writing configuration..."))
+			output.Reset()
 			if err := tool.Configure(); err != nil {
+				logs = appendCommandOutput(logs, output.String())
 				return installDoneMsg{
 					err:  fmt.Errorf("[%s] configure failed: %v", name, err),
 					logs: logs,
 				}
 			}
+			logs = appendCommandOutput(logs, output.String())
 			logs = append(logs, fmtLogPhase(name, "config", "configuration applied"))
 
 			// Phase 3: Start
 			logs = append(logs, fmtLogPhase(name, "start", "enabling systemd service..."))
+			output.Reset()
 			if err := tool.Start(); err != nil {
+				logs = appendCommandOutput(logs, output.String())
 				return installDoneMsg{
 					err:  fmt.Errorf("[%s] start failed: %v", name, err),
 					logs: logs,
 				}
 			}
+			logs = appendCommandOutput(logs, output.String())
 			logs = append(logs, fmtLogPhase(name, "start", "service active ✓"))
-
-			// Summary line per tool
-			logs = append(logs, fmtLogSuccess(fmt.Sprintf("%s — fully deployed", name)))
-			logs = append(logs, "") // blank line separator between tools
+			logs = append(logs, fmtLogSuccess(fmt.Sprintf("%s - fully deployed", name)))
+			marker := fmtLogCommand("------------------------------------------------------------")
+			logs = append(logs, marker, "")
 		}
 
 		return installDoneMsg{err: nil, logs: logs}
 	}
+}
+
+func appendCommandOutput(logs []string, output string) []string {
+	lines := compactCommandOutput(output)
+	for _, line := range lines {
+		logs = append(logs, fmtLogCommand(line))
+	}
+	return logs
+}
+
+func compactCommandOutput(output string) []string {
+	raw := strings.Split(output, "\n")
+	lines := make([]string, 0, len(raw))
+
+	for _, line := range raw {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		lines = append(lines, truncateLine(line, 120))
+	}
+
+	if len(lines) <= 12 {
+		return lines
+	}
+
+	compacted := make([]string, 0, 9)
+	compacted = append(compacted, lines[:4]...)
+	compacted = append(compacted, fmt.Sprintf("... %d more lines omitted ...", len(lines)-8))
+	compacted = append(compacted, lines[len(lines)-4:]...)
+	return compacted
+}
+
+func truncateLine(line string, limit int) string {
+	if len(line) <= limit {
+		return line
+	}
+	return line[:limit-3] + "..."
+}
+
+func lastLines(lines []string, count int) []string {
+	if len(lines) <= count {
+		return lines
+	}
+	return lines[len(lines)-count:]
 }

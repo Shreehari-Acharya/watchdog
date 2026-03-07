@@ -46,8 +46,8 @@ func (f *FalcoTool) InstallRPM(packageManager string) error {
 
 	for _, cmdArgs := range cmds {
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = getCommandOutput()
+		cmd.Stderr = getCommandOutput()
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to run %s: %w", cmdArgs[0], err)
 		}
@@ -66,8 +66,8 @@ apt-get install -y falco
 `
 
 	cmd := exec.Command("bash", "-c", script)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = getCommandOutput()
+	cmd.Stderr = getCommandOutput()
 	return cmd.Run()
 }
 
@@ -107,8 +107,8 @@ func (f *FalcoTool) Start() error {
 	}
 
 	cmd := exec.Command("systemctl", "restart", "falco")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = getCommandOutput()
+	cmd.Stderr = getCommandOutput()
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start falco: %w", err)
 	}

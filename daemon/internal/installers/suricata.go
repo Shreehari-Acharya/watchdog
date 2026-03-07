@@ -69,8 +69,8 @@ apt-get install -y suricata jq
 `
 
 	cmd := exec.Command("bash", "-c", script)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = getCommandOutput()
+	cmd.Stderr = getCommandOutput()
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to install suricata with apt packages: %w", err)
 	}
@@ -115,7 +115,7 @@ func (s *SuricataTool) Start() error {
 
 func runInstallerCommand(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = getCommandOutput()
+	cmd.Stderr = getCommandOutput()
 	return cmd.Run()
 }
