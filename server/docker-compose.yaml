@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: watchdog-dev-postgres
+    environment:
+      POSTGRES_USER: watchdog-admin
+      POSTGRES_PASSWORD: watchdog-123
+      POSTGRES_DB: watchdog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - watchdog-data:/var/lib/postgresql/data
+
+volumes:
+  watchdog-data:
