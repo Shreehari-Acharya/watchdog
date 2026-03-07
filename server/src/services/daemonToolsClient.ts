@@ -5,6 +5,10 @@ type ReadToolResponse = {
   contents: string;
 };
 
+type DirenumToolResponse = {
+  contents: string;
+};
+
 const daemonBaseUrl = process.env.DAEMON_BASE_URL ?? "http://localhost:4000";
 
 const buildUrl = (pathname: string, query: Record<string, string>): string => {
@@ -79,3 +83,21 @@ export const restartToolWithApi = async (tool: toolname): Promise<"success" | "e
   return parseSuccessOrError(response);
 };
 
+export const direnumWithToolApi = async (level: number): Promise<DirenumToolResponse> => {
+  const response = await fetch(buildUrl("/tools/direnum", { level: level.toString() }), {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Daemon direnum failed with status ${response.status}`);
+  }
+
+  const payload = (await response.json()) as Partial<DirenumToolResponse>;
+  if (typeof payload.contents !== "string") {
+    throw new Error("Daemon direnum response is invalid");
+  }
+
+  return {
+    contents: payload.contents,
+  };
+};
