@@ -202,15 +202,15 @@ export default function EventsAllPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-center text-zinc-600 dark:text-zinc-400">
                       {event.count}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap  text-center px-4 py-3">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`inline-block text-center rounded-full px-2 py-0.5 text-xs font-medium ${
                           event.askedAnalysis
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                             : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
                         }`}
                       >
-                        {event.askedAnalysis ? "Yes" : "No"}
+                        {event.askedAnalysis ? "Requested" : "Not Requested"}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
@@ -221,7 +221,7 @@ export default function EventsAllPage() {
                             : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
                         }`}
                       >
-                        {event.finished ? "Analyzed" : "Pending"}
+                        {event.finished ? "Analyzed" : "No"}
                       </span>
                     </td>
                     <td className="px-4 py-3">
