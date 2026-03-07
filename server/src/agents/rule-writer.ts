@@ -158,7 +158,7 @@ export async function runRuleWriterAgent(
 Project Summary (authoritative context from backend):
 ${resolvedProjectSummary}`;
 
-  const result = await run(agent, input, { session });
+  const result = await run(agent, input, { session, maxTurns: 20 });
   logInfo("agent.rule-writer", "completed", { tool: selectedTool });
   return String(result.finalOutput ?? "success");
 }
