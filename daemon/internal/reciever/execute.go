@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -40,6 +42,7 @@ func HandleToolsRead(w http.ResponseWriter, r *http.Request){
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
+		"filepath": path,
 		"contents": string(data),
 	})
 }
@@ -132,4 +135,56 @@ func HandleToolsRestart(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
+}
+
+func HandleDirEnum(w http.ResponseWriter, r *http.Request) {
+	targetPath := r.URL.Query().Get("path")
+	if targetPath == "" {
+		targetPath = "." // Default to current directory if not provided
+	}
+
+	levelStr := r.URL.Query().Get("level")
+	maxDepth, err := strconv.Atoi(levelStr)
+	if err != nil || maxDepth < 1 {
+		maxDepth = 1 // Default to level 1 if invalid
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Directory listing for: %s (Max Depth: %d)\n", targetPath, maxDepth))
+
+	// Walk the directory tree
+	filepath.Walk(targetPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip errors like permission denied
+		}
+
+		// Calculate current depth
+		relPath, _ := filepath.Rel(targetPath, path)
+		depth := strings.Count(relPath, string(os.PathSeparator))
+		if relPath == "." {
+			depth = 0
+		}
+
+		// Stop going deeper if we hit the level limit
+		if depth > maxDepth {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Formatting the tree output
+		indent := strings.Repeat("  ", depth)
+		if info.IsDir() {
+			fmt.Fprintf(&sb, "%s📁 %s/\n", indent, info.Name())
+		} else {
+			fmt.Fprintf(&sb, "%s📄 %s\n", indent, info.Name())
+		}
+		return nil
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"contents": sb.String(),
+	})
 }
